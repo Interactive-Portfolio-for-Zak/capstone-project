@@ -1,101 +1,124 @@
 // required imports
 const express = require("express");
-const mongoose = require("mongoose")
-const cors = require("cors")
+const mongoose = require("mongoose");
+const cors = require("cors");
 const router = express.Router();
 const port = process.env.PORT || 5000;
 const app = express();
 const nodemailer = require("nodemailer");
 require("dotenv").config();
-const ServerSchema = require('./ServerSchema');
+const ServerSchema = require("./ServerSchema");
+//require ("regenerator-runtime/runtime");
+const axios = require("axios");
+const { response } = require("express");
+//
 
-// import course schema for materials
-const CourseSchema = require("./CourseSchema");
+// //
+// const TalentLMS = require('talentlms')
+// const tl = new TalentLMS('zakariahrittenhouse.talentlms.com/api/v1', `${process.env.APIKEY}`)
+// const apiWork = tl.Courses.getCourses()
+// console.log(apiWork)
+
 
 //create the initial connection to the database
-mongoose.connect("mongodb://localhost:27017/zakPortfolio", {useNewUrlParser: true}, (err) => {
-  if (!err) {
-    console.log("MongoDB Connection Succeeded!")
-  } else {
-    console.log(`Error in DB connection: ${err}`)
+mongoose.connect(
+  "mongodb://localhost:27017/zakPortfolio",
+  { useNewUrlParser: true },
+  (err) => {
+    if (!err) {
+      console.log("MongoDB Connection Succeeded!");
+    } else {
+      console.log(`Error in DB connection: ${err}`);
+    }
   }
-});
+);
 
 //init the database through the connection constructor, stored in a variable
-const db = mongoose.connection
+const db = mongoose.connection;
 
 //binds error message to the connection variable to print if an error occurs
-db.on('error', console.error.bind(console, 'connection error'))
+db.on("error", console.error.bind(console, "connection error"));
 
 //creating the entry model utilizing the entry schema and entries collection
-const Entry = mongoose.model("entries", ServerSchema)
+const Entry = mongoose.model("entries", ServerSchema);
 
 //middleware functions
-app.use(express.static("./build"))
-app.use(express.urlencoded({extended: true}))
-app.use(cors())
+app.use(cors());
+app.use(express.static("./build"));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use("/", router);
 
-// create model for Courses
-const Courses = mongoose.model("courses", CourseSchema);
+
+let url = 'https://zakariahrittenhouse.talentlms.com/api/v1/courses/'
+// axios.get(url, {auth: {
+//   username: process.env.APIKEY
+// }}).then(function (response) {
+//   console.log(response);
+// })
+
 
 // create API route for the front end to access the COURSES
-app.get("/materials", async (request, response) => {
-  let allCourses = await Courses.find({"courseMaterials": "materials"})
-  response.json(allCourses)
-})
+app.get("/materials", (req, res) => {
+  axios.get(url, {auth: {
+    username: process.env.APIKEY
+  }}).then(function (response) {
+    res.json(response.data)
+    console.log(response.data + " did it work?")
+  })
+});
+
+// app.post("/materials", async (request, response) => {
+//   let courseId = request.params.courseId
+//   await allCourses
+// })
 
 
-app.listen(port,()=>{
-    console.log(`Listening on port: ${port}`)
-})
+app.listen(port, () => {
+  console.log(`Listening on port: ${port}`);
+});
 
 //Setting up nodemailer with gmail
 const contactEmail = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-    user:process.env.USER,
+    user: process.env.USER,
     pass: process.env.PASS,
   },
-
 });
 
 contactEmail.verify((error) => {
-  if (error){
+  if (error) {
     console.log(error);
   } else {
-    console.log("Ready to send")
+    console.log("Ready to send");
   }
 });
 
 // setting up the router to send an email
-router.post("/contact", (req,res) => {
-const name = req.body.name;
-const email = req.body.email;
-const subject = req.body.subject;
-const message = req.body.message;
+router.post("/contact", (req, res) => {
+  const name = req.body.name;
+  const email = req.body.email;
+  const subject = req.body.subject;
+  const message = req.body.message;
 
-const mail = {
-  from: `Contact Form: ${email}`,
-  to: "portfoliotest001@gmail.com",
-  subject: subject,
-  html: `<p>Name: ${name}</p>
+  const mail = {
+    from: `Contact Form: ${email}`,
+    to: "portfoliotest001@gmail.com",
+    subject: subject,
+    html: `<p>Name: ${name}</p>
   <p>Email: ${email}</p>
-  <p>Message: ${message}</p>`
-};
+  <p>Message: ${message}</p>`,
+  };
 
-contactEmail.sendMail(mail, (error) => {
-  if (error) {
-    res.json({status: "ERROR"});
-  } else {
-    res.json({status: "Message Sent"})
-  }
+  contactEmail.sendMail(mail, (error) => {
+    if (error) {
+      res.json({ status: "ERROR" });
+    } else {
+      res.json({ status: "Message Sent" });
+    }
+  });
 });
 
-});
-
-
-  
-// redirecting to the home page 
+// redirecting to the home page
 //  res.redirect("http://localhost:3000/contact")
