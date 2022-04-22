@@ -6,19 +6,18 @@ const router = express.Router();
 const port = process.env.PORT || 5000;
 const app = express();
 const nodemailer = require("nodemailer");
+// very much needed
 require("dotenv").config();
 const ServerSchema = require("./ServerSchema");
+
+// pretty sure this isnt needed
 //require ("regenerator-runtime/runtime");
+
+// definitely needed
 const axios = require("axios");
+
+// is this needed??
 const { response } = require("express");
-//
-
-// //
-// const TalentLMS = require('talentlms')
-// const tl = new TalentLMS('zakariahrittenhouse.talentlms.com/api/v1', `${process.env.APIKEY}`)
-// const apiWork = tl.Courses.getCourses()
-// console.log(apiWork)
-
 
 //create the initial connection to the database
 mongoose.connect(
